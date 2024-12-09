@@ -1,0 +1,31 @@
+<div class="stock-main">
+    <div class="stock-info">
+        <h3>{{ data.product.name }}</h3>
+        <span class="stock-price" data-price="{{ data.product.price }}"></span>
+    </div>
+    <div class="stock-numbers">
+        <div class="stock-stats">
+            <div class="stat-item {% if data.current <= data.product.min_stock %}low-stock{% endif %}">
+                <span class="stat-value">{{ data.current }}</span>
+                <span class="stat-label">en stock</span>
+                {% if data.current <= data.product.min_stock %}
+                <span class="min-stock-label">(Mínimo: {{ data.product.min_stock }})</span>
+                {% endif %}
+            </div>
+            <div class="stat-item">
+                <span class="stat-value" data-price="{{ data.current * data.product.price }}"></span>
+                <span class="stat-label">valor</span>
+            </div>
+            <div class="stat-item">
+                <i class="fas fa-arrow-circle-down"></i>
+                <span class="stat-value">{{ data.period_purchased }}</span>
+                <span class="stat-label">comprados</span>
+            </div>
+            <div class="stat-item">
+                <i class="fas fa-arrow-circle-up"></i>
+                <span class="stat-value">{{ data.period_sold }}</span>
+                <span class="stat-label">vendidos</span>
+            </div>
+        </div>
+    </div>
+</div> 

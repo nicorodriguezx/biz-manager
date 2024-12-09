@@ -2,19 +2,25 @@
     {
         "product_id": 1,
         "name": "Coca Cola 500ml",
-        "price": 1500.00,
-        "description": "Description for Coca Cola 500ml"
+        "price": 1500.0,
+        "min_stock": 2
     },
     {
         "product_id": 2,
         "name": "Helado Frigor Palito",
-        "price": 1000.00,
-        "description": "Description for Helado Frigor Palito"
+        "price": 1000.0,
+        "min_stock": 2
     },
     {
         "product_id": 3,
         "name": "Bolsa Chupetines",
-        "price": 500.00,
-        "description": "Description for Bolsa Chupetines"
+        "price": 500.0,
+        "min_stock": 2
+    },
+    {
+        "product_id": 4,
+        "name": "Alfajor Jorgito",
+        "price": 800.0,
+        "min_stock": 2
     }
-] 
+]

@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>
+    <i class="fas fa-truck-loading"></i>
+    Registrar Compra
+</h2>
+
+<div class="card">
+    <div class="card-body">
+        <form id="purchaseForm" onsubmit="submitForm(event)">
+            <div id="purchaseRows">
+                <div class="purchase-row">
+                    <div class="form-group">
+                        <label class="form-label">Producto</label>
+                        <select class="form-input product-select" required>
+                            <option value="">Seleccionar producto</option>
+                            {% for product in products %}
+                            <option value="{{ product.product_id }}">{{ product.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="purchase-details">
+                        <div class="form-group">
+                            <label class="form-label">Cantidad</label>
+                            <input type="number" class="form-input quantity-input" min="1" required
+                                   oninput="updateTotal(this)">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Costo Unitario</label>
+                            <div class="cost-input-group">
+                                <span class="currency-symbol">$</span>
+                                <input type="number" class="form-input cost-input" step="0.01" min="0" required
+                                       oninput="updateTotal(this)">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="purchase-row-summary">
+                        <span class="row-total">$0.00</span>
+                        <button type="button" class="btn-text btn-delete" onclick="removeRow(this)">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                    <hr>
+                </div>
+            </div>
+            
+            <button type="button" class="btn-text btn-primary add-product" onclick="addRow()">
+                <i class="fas fa-plus"></i>
+                Agregar Producto
+            </button>
+
+            <div class="purchase-summary">
+                <span class="total-label">Total Compra:</span>
+                <span class="total-value" id="purchaseTotal">$0.00</span>
+            </div>
+            
+            <div class="button-group">
+                <button type="submit" class="btn-text btn-primary">
+                    <i class="fas fa-save"></i>
+                    Guardar Compra
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function addRow() {
+    const template = document.querySelector('.purchase-row').cloneNode(true);
+    template.querySelector('.product-select').value = '';
+    template.querySelector('.quantity-input').value = '';
+    template.querySelector('.cost-input').value = '';
+    template.querySelector('.row-total').textContent = '$0.00';
+    document.getElementById('purchaseRows').appendChild(template);
+}
+
+function removeRow(button) {
+    const container = document.getElementById('purchaseRows');
+    if (container.children.length > 1) {
+        button.closest('.purchase-row').remove();
+        updatePurchaseTotal();
+    }
+}
+
+function updateTotal(input) {
+    const row = input.closest('.purchase-row');
+    const quantity = parseFloat(row.querySelector('.quantity-input').value) || 0;
+    const cost = parseFloat(row.querySelector('.cost-input').value) || 0;
+    const total = quantity * cost;
+    row.querySelector('.row-total').textContent = `$${total.toFixed(2)}`;
+    updatePurchaseTotal();
+}
+
+function updatePurchaseTotal() {
+    const totals = Array.from(document.querySelectorAll('.row-total'))
+        .map(span => parseFloat(span.textContent.replace('$', '')) || 0);
+    const total = totals.reduce((a, b) => a + b, 0);
+    document.getElementById('purchaseTotal').textContent = `$${total.toFixed(2)}`;
+}
+
+function submitForm(event) {
+    event.preventDefault();
+    
+    const rows = document.querySelectorAll('.purchase-row');
+    const purchases = Array.from(rows)
+        .filter(row => row.querySelector('.product-select').value)
+        .map(row => ({
+            product_id: row.querySelector('.product-select').value,
+            quantity: row.querySelector('.quantity-input').value,
+            unit_cost: row.querySelector('.cost-input').value
+        }));
+    
+    if (purchases.length === 0) {
+        alert('Por favor ingrese al menos un producto');
+        return;
+    }
+
+    Promise.all(purchases.map(data => 
+        fetch('/admin/purchases', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        }).then(response => response.json())
+    ))
+    .then(results => {
+        if (results.every(r => r.success)) {
+            alert('Compras registradas exitosamente');
+            window.location.reload();
+        } else {
+            alert('Error al registrar algunas compras');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al procesar la solicitud');
+    });
+}
+</script>
+{% endblock %} 

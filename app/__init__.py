@@ -1,21 +1,42 @@
 from flask import Flask
 from flask_login import LoginManager
-from .routes import main, login_manager
-from datetime import timedelta
+from .models import User
+from config import Config
+from datetime import datetime
+import locale
+
+login_manager = LoginManager()
 
 def create_app():
     app = Flask(__name__)
-    app.config['SECRET_KEY'] = 'your-secret-key-here'  # Change this to a secure secret key
+    app.config.from_object(Config)
     
-    # Configure Flask-Login for persistent sessions
-    app.config['REMEMBER_COOKIE_DURATION'] = timedelta(days=30)  # Cookie will last 30 days
-    app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30)
-    app.config['SESSION_PERMANENT'] = True
+    # Set locale for Spanish weekday names
+    locale.setlocale(locale.LC_TIME, 'es_ES.UTF-8')
     
-    # Initialize Flask-Login
+    # Add date filter
+    @app.template_filter('strftime')
+    def _jinja2_filter_datetime(date_str, fmt=None):
+        date_obj = datetime.strptime(date_str, '%Y-%m-%d')
+        return date_obj.strftime(fmt)
+    
+    # Initialize login manager
     login_manager.init_app(app)
+    login_manager.login_view = 'main.login'
+    
+    @login_manager.user_loader
+    def load_user(user_id):
+        return User.get_user(user_id)
     
     # Register blueprints
+    from .routes import main
     app.register_blueprint(main)
+    
+    from .admin import admin
+    app.register_blueprint(admin)
+    
+    @app.template_filter('format_money')
+    def format_money(value):
+        return f"$ {value:,}".replace(",", ".")
     
     return app

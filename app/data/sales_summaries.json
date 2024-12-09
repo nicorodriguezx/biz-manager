@@ -1,2 +1,41 @@
 [
+    {
+        "summary_id": 1,
+        "user_id": 102,
+        "date": "2024-12-09",
+        "timestamp": "2024-12-09T00:06:05.233964",
+        "products": [
+            {
+                "product_id": 1,
+                "sold_units": 2,
+                "unit_price": 1500.0,
+                "total": 3000.0
+            },
+            {
+                "product_id": 2,
+                "sold_units": 3,
+                "unit_price": 1000.0,
+                "total": 3000.0
+            },
+            {
+                "product_id": 3,
+                "sold_units": 1,
+                "unit_price": 500.0,
+                "total": 500.0
+            },
+            {
+                "product_id": 4,
+                "sold_units": 2,
+                "unit_price": 800.0,
+                "total": 1600.0
+            }
+        ],
+        "total_sales": 8100.0,
+        "commission": 2314.28502,
+        "return_due": 5785.714980000001,
+        "payment_details": {
+            "efectivo": 3000.0,
+            "mercadopago": 2785.71
+        }
+    }
 ]

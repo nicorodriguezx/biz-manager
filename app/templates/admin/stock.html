@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>
+    <i class="fas fa-boxes"></i>
+    Control de Stock
+</h2>
+
+<div class="card">
+    <div class="card-body">
+        <form method="GET" class="filters-form">
+            <div class="date-shortcuts">
+                <button type="button" 
+                        class="date-shortcut {% if selected_range == 'today' %}active{% endif %}" 
+                        onclick="setDateRange('today')">Hoy</button>
+                <button type="button" 
+                        class="date-shortcut {% if selected_range == 'last-7' %}active{% endif %}" 
+                        onclick="setDateRange('last-7')">Últimos 7 días</button>
+                <button type="button" 
+                        class="date-shortcut {% if selected_range == 'this-month' %}active{% endif %}" 
+                        onclick="setDateRange('this-month')">Este mes</button>
+                <button type="button" 
+                        class="date-shortcut {% if selected_range == 'last-30' %}active{% endif %}" 
+                        onclick="setDateRange('last-30')">Últimos 30 días</button>
+                <button type="button" 
+                        class="date-shortcut {% if selected_range == 'custom' %}active{% endif %}" 
+                        onclick="toggleCustomDates()">Otro período de fechas</button>
+            </div>
+            <div id="custom-dates" class="date-inputs" style="display: {% if selected_range == 'custom' %}flex{% else %}none{% endif %}">
+                <input type="date" name="start_date" class="form-input" id="start_date"
+                       onchange="this.form.submit()" value="{{ start_date }}">
+                <span class="date-separator">hasta</span>
+                <input type="date" name="end_date" class="form-input" id="end_date"
+                       onchange="this.form.submit()" value="{{ end_date }}">
+            </div>
+        </form>
+
+        <div class="summary-cards">
+            <div class="summary-card">
+                <div class="summary-card-title">
+                    <i class="fas fa-dollar-sign"></i>
+                    Valor Total del Inventario
+                </div>
+                <div class="summary-card-value" data-price="{{ total_value }}"></div>
+            </div>
+        </div>
+
+        <div class="stock-sections">
+            <div class="stock-section">
+                <h3 class="section-title">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    Stock Bajo
+                </h3>
+                <div class="stock-list">
+                    {% for pid, data in stock.items() if data.current <= data.product.min_stock %}
+                    <div class="stock-item low-stock-item">
+                        {% include 'admin/partials/stock_item.html' %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="stock-section">
+                <h3 class="section-title">
+                    <i class="fas fa-check-circle"></i>
+                    Stock Normal
+                </h3>
+                <div class="stock-list">
+                    {% for pid, data in stock.items() if data.current > data.product.min_stock %}
+                    <div class="stock-item">
+                        {% include 'admin/partials/stock_item.html' %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleCustomDates() {
+    const customDates = document.getElementById('custom-dates');
+    customDates.style.display = 'flex';
+    
+    document.querySelectorAll('.date-shortcut').forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+}
+
+function setDateRange(range) {
+    const today = new Date();
+    let startDate = new Date(today);  // Clone today
+    
+    switch(range) {
+        case 'today':
+            startDate = today;
+            break;
+        case 'last-7':
+            startDate.setDate(today.getDate() - 6);
+            break;
+        case 'this-month':
+            startDate.setDate(1);
+            break;
+        case 'last-30':
+            startDate.setDate(today.getDate() - 29);
+            break;
+    }
+    
+    document.getElementById('custom-dates').style.display = 'none';
+    document.querySelectorAll('.date-shortcut').forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+    
+    document.getElementById('start_date').value = formatDate(startDate);
+    document.getElementById('end_date').value = formatDate(today);
+    
+    document.querySelector('.filters-form').submit();
+}
+
+function formatDate(date) {
+    return date.toISOString().split('T')[0];
+}
+
+function formatMoney(amount) {
+    return `$ ${Math.round(amount).toLocaleString('es-AR')}`;
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Format all prices on load
+    document.querySelectorAll('[data-price]').forEach(el => {
+        el.textContent = formatMoney(el.dataset.price);
+    });
+});
+</script>
+{% endblock %} 

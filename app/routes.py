@@ -25,10 +25,18 @@ def login():
         
         if user:
             login_user(user, remember=True)
-            flash('Sesión iniciada exitosamente.', 'success')
+            # Redirect based on user role
+            if user.is_admin:
+                return redirect(url_for('admin.admin_dashboard'))
             return redirect(url_for('main.user_dashboard'))
         else:
             flash('Usuario o contraseña inválidos.', 'danger')
+    
+    # If user is already logged in, redirect appropriately
+    if current_user.is_authenticated:
+        if current_user.is_admin:
+            return redirect(url_for('admin.admin_dashboard'))
+        return redirect(url_for('main.user_dashboard'))
     
     return render_template('login.html')
 
@@ -42,6 +50,8 @@ def logout():
 @main.route('/')
 def index():
     if current_user.is_authenticated:
+        if current_user.is_admin:
+            return redirect(url_for('admin.admin_dashboard'))
         return redirect(url_for('main.user_dashboard'))
     return redirect(url_for('main.login'))
 
@@ -214,11 +224,6 @@ def return_payment():
             "success": False,
             "error": "Error al procesar el pago"
         }
-
-@main.route('/admin/products', methods=['GET', 'POST'])
-def manage_products():
-    # Admin product management
-    pass
 
 @main.route('/cancel-return', methods=['POST'])
 @login_required

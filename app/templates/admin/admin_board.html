@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>
+    <i class="fas fa-tachometer-alt"></i>
+    Panel de Administración
+</h2>
+
+<div class="admin-menu">
+    <a href="{{ url_for('admin.manage_products') }}" class="admin-card">
+        <div class="admin-card-icon">
+            <i class="fas fa-box"></i>
+        </div>
+        <div class="admin-card-content">
+            <h3>Productos</h3>
+            <p>Administrar productos del catálogo</p>
+        </div>
+    </a>
+    <a href="{{ url_for('admin.manage_users') }}" class="admin-card">
+        <div class="admin-card-icon">
+            <i class="fas fa-users"></i>
+        </div>
+        <div class="admin-card-content">
+            <h3>Usuarios</h3>
+            <p>Ver usuarios y comisiones</p>
+        </div>
+    </a>
+    <a href="{{ url_for('admin.sales_reports') }}" class="admin-card">
+        <div class="admin-card-icon">
+            <i class="fas fa-chart-line"></i>
+        </div>
+        <div class="admin-card-content">
+            <h3>Reportes</h3>
+            <p>Ver reportes de ventas</p>
+        </div>
+    </a>
+    <a href="{{ url_for('admin.view_stock') }}" class="admin-card">
+        <div class="admin-card-icon">
+            <i class="fas fa-boxes"></i>
+        </div>
+        <div class="admin-card-content">
+            <h3>Stock</h3>
+            <p>Ver movimientos de stock</p>
+        </div>
+    </a>
+    <a href="{{ url_for('admin.manage_purchases') }}" class="admin-card">
+        <div class="admin-card-icon">
+            <i class="fas fa-truck-loading"></i>
+        </div>
+        <div class="admin-card-content">
+            <h3>Compras</h3>
+            <p>Registrar compras de stock</p>
+        </div>
+    </a>
+</div>
+{% endblock %} 
