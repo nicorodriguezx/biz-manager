@@ -47,7 +47,7 @@ body {
     align-items: center;
     max-width: var(--max-width);
     margin: 0 auto;
-    padding: 0 1.5rem;
+    padding: 0 2rem;
 }
 
 .brand {
@@ -56,6 +56,7 @@ body {
     color: var(--primary-color);
     text-decoration: none;
     transition: color 0.2s;
+    white-space: nowrap;
 }
 
 .brand:hover {
@@ -65,12 +66,16 @@ body {
 .user-info {
     display: flex;
     align-items: center;
-    gap: 1.5rem;
+    gap: 2rem;
+    margin-left: 2rem;
 }
 
 .username {
     color: var(--text-secondary);
     font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
 .btn-logout {

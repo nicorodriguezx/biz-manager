@@ -1,3 +1,12 @@
+"""
+Utility functions for the application.
+
+This module provides helper functions for:
+- Calculating daily sales summaries and commissions
+- Managing active products and their quantities
+- Text processing utilities
+"""
+
 from ..models import get_daily_transactions, read_json, User
 
 def calculate_daily_summary(user_id, transaction_date):
@@ -77,3 +86,7 @@ def get_active_products_list(user_id, transaction_date):
         }
         for product_id, product in active_products.items()
     ]
+
+def slugify(text):
+    """Convert text to URL-friendly slug"""
+    return text.lower().replace(' ', '-').replace('á', 'a').replace('é', 'e').replace('í', 'i').replace('ó', 'o').replace('ú', 'u')

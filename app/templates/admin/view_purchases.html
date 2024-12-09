@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>
+    <i class="fas fa-shopping-cart"></i>
+    Historial de Compras
+</h2>
+
+<div class="card">
+    <div class="card-body">
+        <!-- Date Filter -->
+        <form method="GET" class="filters-form">
+            <div class="date-shortcuts">
+                <button type="button" 
+                        class="date-shortcut {% if selected_range == 'today' %}active{% endif %}" 
+                        onclick="setDateRange('today')">Hoy</button>
+                <button type="button" 
+                        class="date-shortcut {% if selected_range == 'last-7' %}active{% endif %}" 
+                        onclick="setDateRange('last-7')">Últimos 7 días</button>
+                <button type="button" 
+                        class="date-shortcut {% if selected_range == 'this-month' %}active{% endif %}" 
+                        onclick="setDateRange('this-month')">Este mes</button>
+                <button type="button" 
+                        class="date-shortcut {% if selected_range == 'last-30' %}active{% endif %}" 
+                        onclick="setDateRange('last-30')">Últimos 30 días</button>
+                <button type="button" 
+                        class="date-shortcut {% if selected_range == 'custom' %}active{% endif %}" 
+                        onclick="toggleCustomDates()">Otro período de fechas</button>
+            </div>
+            <div id="custom-dates" class="date-inputs" style="display: {% if selected_range == 'custom' %}flex{% else %}none{% endif %}">
+                <input type="date" name="start_date" class="form-input" id="start_date"
+                       onchange="this.form.submit()" value="{{ start_date }}">
+                <span class="date-separator">hasta</span>
+                <input type="date" name="end_date" class="form-input" id="end_date"
+                       onchange="this.form.submit()" value="{{ end_date }}">
+            </div>
+        </form>
+
+        <!-- Summary Card -->
+        <div class="summary-cards">
+            <div class="summary-card">
+                <div class="summary-card-title">
+                    <i class="fas fa-dollar-sign"></i>
+                    Total en Compras
+                </div>
+                <div class="summary-card-value" data-price="{{ total_spent }}"></div>
+            </div>
+        </div>
+
+        <!-- Purchases List -->
+        <div class="purchases-list">
+            {% for purchase in purchases %}
+            <div class="purchase-card">
+                <div class="purchase-header">
+                    <div class="purchase-date">
+                        {{ purchase.date }}
+                        <span class="purchase-time">{{ purchase.created_at.split('T')[1][:5] }}</span>
+                    </div>
+                    <div class="purchase-total-amount" data-price="{{ purchase.total_cost }}"></div>
+                </div>
+                <div class="purchase-details">
+                    {% for detail in purchase.details %}
+                    <div class="detail-item">
+                        <div class="detail-info">
+                            <span class="detail-product">{{ detail.product_name }}</span>
+                            <span class="detail-quantity">{{ detail.quantity }} unid.</span>
+                        </div>
+                        <div class="detail-costs">
+                            <div class="unit-cost">
+                                <span class="cost-label">Costo unit.:</span>
+                                <span class="cost-value" data-price="{{ detail.unit_cost }}"></span>
+                            </div>
+                            <div class="total-cost">
+                                <span class="cost-label">Total:</span>
+                                <span class="cost-value" data-price="{{ detail.quantity * detail.unit_cost }}"></span>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/dates.js') }}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Format all prices
+    document.querySelectorAll('[data-price]').forEach(el => {
+        el.textContent = formatMoney(el.dataset.price);
+    });
+});
+
+function formatMoney(amount) {
+    return `$ ${parseFloat(amount).toLocaleString('es-AR')}`;
+}
+</script>
+{% endblock %} 

@@ -17,6 +17,8 @@
     {% if request.endpoint.startswith('admin.') %}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
     {% endif %}
+    <link href="https://cdn.jsdelivr.net/npm/@sweetalert2/theme-bootstrap-4/bootstrap-4.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body>
     <nav class="navbar">
@@ -33,7 +35,7 @@
                 </span>
                 <a href="{{ url_for('main.logout') }}" class="btn-logout">
                     <i class="fas fa-sign-out-alt"></i>
-                    Cerrar Sesión
+                    Salir
                 </a>
             </div>
             {% endif %}

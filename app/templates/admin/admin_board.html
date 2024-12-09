@@ -1,55 +1,117 @@
 {% extends "base.html" %}
 {% block content %}
 <h2>
-    <i class="fas fa-tachometer-alt"></i>
+    <i class="fas fa-cog"></i>
     Panel de Administración
 </h2>
 
-<div class="admin-menu">
-    <a href="{{ url_for('admin.manage_products') }}" class="admin-card">
-        <div class="admin-card-icon">
-            <i class="fas fa-box"></i>
+<div class="admin-sections">
+    <!-- Registros Section -->
+    <div class="admin-section">
+        <h3 class="section-title">Registros</h3>
+        <div class="admin-cards">
+            <a href="{{ url_for('admin.manage_purchases') }}" class="admin-card">
+                <div class="admin-card-icon">
+                    <i class="fas fa-cart-plus"></i>
+                </div>
+                <div class="admin-card-content">
+                    <h3>Registrar Compras</h3>
+                    <p>Registrar compras de productos para stock</p>
+                </div>
+            </a>
+
+            <a href="{{ url_for('admin.manage_expenses') }}" class="admin-card">
+                <div class="admin-card-icon">
+                    <i class="fas fa-file-invoice-dollar"></i>
+                </div>
+                <div class="admin-card-content">
+                    <h3>Registrar Gastos</h3>
+                    <p>Registrar gastos del negocio</p>
+                </div>
+            </a>
         </div>
-        <div class="admin-card-content">
-            <h3>Productos</h3>
-            <p>Administrar productos del catálogo</p>
+    </div>
+
+    <!-- Reportes Section -->
+    <div class="admin-section">
+        <h3 class="section-title">Reportes</h3>
+        <div class="admin-cards">
+            <a href="{{ url_for('admin.view_balance') }}" class="admin-card">
+                <div class="admin-card-icon">
+                    <i class="fas fa-balance-scale"></i>
+                </div>
+                <div class="admin-card-content">
+                    <h3>Ver Balance</h3>
+                    <p>Balance de ingresos y egresos</p>
+                </div>
+            </a>
+
+            <a href="{{ url_for('admin.sales_reports') }}" class="admin-card">
+                <div class="admin-card-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="admin-card-content">
+                    <h3>Ver Ventas</h3>
+                    <p>Reportes y estadísticas de ventas</p>
+                </div>
+            </a>
+
+            <a href="{{ url_for('admin.view_transactions') }}" class="admin-card">
+                <div class="admin-card-icon">
+                    <i class="fas fa-exchange-alt"></i>
+                </div>
+                <div class="admin-card-content">
+                    <h3>Ver Retirado/Devuelto</h3>
+                    <p>Historial de movimientos de productos</p>
+                </div>
+            </a>
+
+            <a href="{{ url_for('admin.view_purchases') }}" class="admin-card">
+                <div class="admin-card-icon">
+                    <i class="fas fa-shopping-cart"></i>
+                </div>
+                <div class="admin-card-content">
+                    <h3>Ver Compras</h3>
+                    <p>Historial de compras realizadas</p>
+                </div>
+            </a>
+
+            <a href="{{ url_for('admin.view_stock') }}" class="admin-card">
+                <div class="admin-card-icon">
+                    <i class="fas fa-boxes"></i>
+                </div>
+                <div class="admin-card-content">
+                    <h3>Ver Stock</h3>
+                    <p>Control y seguimiento del inventario</p>
+                </div>
+            </a>
         </div>
-    </a>
-    <a href="{{ url_for('admin.manage_users') }}" class="admin-card">
-        <div class="admin-card-icon">
-            <i class="fas fa-users"></i>
+    </div>
+
+    <!-- Configuración Section -->
+    <div class="admin-section">
+        <h3 class="section-title">Configuración</h3>
+        <div class="admin-cards">
+            <a href="{{ url_for('admin.manage_products') }}" class="admin-card">
+                <div class="admin-card-icon">
+                    <i class="fas fa-box"></i>
+                </div>
+                <div class="admin-card-content">
+                    <h3>Productos</h3>
+                    <p>Administrar catálogo de productos</p>
+                </div>
+            </a>
+
+            <a href="{{ url_for('admin.manage_users') }}" class="admin-card">
+                <div class="admin-card-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="admin-card-content">
+                    <h3>Usuarios</h3>
+                    <p>Gestionar usuarios y permisos</p>
+                </div>
+            </a>
         </div>
-        <div class="admin-card-content">
-            <h3>Usuarios</h3>
-            <p>Ver usuarios y comisiones</p>
-        </div>
-    </a>
-    <a href="{{ url_for('admin.sales_reports') }}" class="admin-card">
-        <div class="admin-card-icon">
-            <i class="fas fa-chart-line"></i>
-        </div>
-        <div class="admin-card-content">
-            <h3>Reportes</h3>
-            <p>Ver reportes de ventas</p>
-        </div>
-    </a>
-    <a href="{{ url_for('admin.view_stock') }}" class="admin-card">
-        <div class="admin-card-icon">
-            <i class="fas fa-boxes"></i>
-        </div>
-        <div class="admin-card-content">
-            <h3>Stock</h3>
-            <p>Ver movimientos de stock</p>
-        </div>
-    </a>
-    <a href="{{ url_for('admin.manage_purchases') }}" class="admin-card">
-        <div class="admin-card-icon">
-            <i class="fas fa-truck-loading"></i>
-        </div>
-        <div class="admin-card-content">
-            <h3>Compras</h3>
-            <p>Registrar compras de stock</p>
-        </div>
-    </a>
+    </div>
 </div>
 {% endblock %} 

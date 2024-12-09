@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>
+    <i class="fas fa-exchange-alt"></i>
+    Historial de Movimientos
+</h2>
+
+<div class="card">
+    <div class="card-body">
+        <!-- Filters -->
+        <form method="GET" class="filters-form">
+            <div class="filters-grid">
+                <!-- Date Filter -->
+                <div class="date-range">
+                    <label class="form-label">Período</label>
+                    <div class="date-shortcuts">
+                        <button type="button" 
+                                class="date-shortcut {% if selected_range == 'today' %}active{% endif %}" 
+                                onclick="setDateRange('today')">Hoy</button>
+                        <button type="button" 
+                                class="date-shortcut {% if selected_range == 'last-7' %}active{% endif %}" 
+                                onclick="setDateRange('last-7')">Últimos 7 días</button>
+                        <button type="button" 
+                                class="date-shortcut {% if selected_range == 'this-month' %}active{% endif %}" 
+                                onclick="setDateRange('this-month')">Este mes</button>
+                        <button type="button" 
+                                class="date-shortcut {% if selected_range == 'last-30' %}active{% endif %}" 
+                                onclick="setDateRange('last-30')">Últimos 30 días</button>
+                        <button type="button" 
+                                class="date-shortcut {% if selected_range == 'custom' %}active{% endif %}" 
+                                onclick="toggleCustomDates()">Otro período de fechas</button>
+                    </div>
+                    <div id="custom-dates" class="date-inputs" style="display: {% if selected_range == 'custom' %}flex{% else %}none{% endif %}">
+                        <input type="date" name="start_date" class="form-input" id="start_date"
+                               onchange="this.form.submit()" value="{{ start_date }}">
+                        <span class="date-separator">hasta</span>
+                        <input type="date" name="end_date" class="form-input" id="end_date"
+                               onchange="this.form.submit()" value="{{ end_date }}">
+                    </div>
+                </div>
+
+                <!-- Vendor Filter -->
+                <div class="vendor-range">
+                    <label class="form-label">Vendedor</label>
+                    <div class="vendor-shortcuts">
+                        <button type="button" 
+                                class="vendor-shortcut {% if not selected_vendor %}active{% endif %}"
+                                onclick="selectVendor('')">Todos</button>
+                        {% for vendor in vendors %}
+                        <button type="button" 
+                                class="vendor-shortcut {% if selected_vendor == vendor.user_id %}active{% endif %}"
+                                onclick="selectVendor('{{ vendor.user_id }}')">{{ vendor.username }}</button>
+                        {% endfor %}
+                    </div>
+                    <input type="hidden" name="vendor_id" id="vendor_id" value="{{ selected_vendor or '' }}">
+                </div>
+            </div>
+        </form>
+
+        <!-- Transactions List -->
+        <div class="transactions-list">
+            {% for transaction in transactions %}
+            <div class="transaction-card {% if transaction.type == 'extract' %}extraction{% else %}return{% endif %}">
+                <div class="transaction-header">
+                    <div class="transaction-info">
+                        <span class="transaction-date">
+                            {{ transaction.timestamp.split('T')[0] }}
+                            <span class="transaction-time">{{ transaction.timestamp.split('T')[1][:5] }}</span>
+                        </span>
+                        <span class="transaction-type">
+                            {% if transaction.type == 'extract' %}
+                            <i class="fas fa-arrow-right"></i> Retirado
+                            {% else %}
+                            <i class="fas fa-arrow-left"></i> Devuelto
+                            {% endif %}
+                        </span>
+                        <span class="transaction-vendor">{{ transaction.username }}</span>
+                    </div>
+                </div>
+                <div class="transaction-details">
+                    {% for detail in transaction.details %}
+                    <div class="detail-item">
+                        <span class="detail-product">{{ detail.product_name }}</span>
+                        <span class="detail-quantity">{{ detail.quantity }} unid.</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/dates.js') }}"></script>
+<script>
+function selectVendor(vendorId) {
+    document.getElementById('vendor_id').value = vendorId;
+    
+    // Update active state of buttons
+    document.querySelectorAll('.vendor-shortcut').forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+    
+    // Submit form
+    document.querySelector('.filters-form').submit();
+}
+</script>
+{% endblock %} 

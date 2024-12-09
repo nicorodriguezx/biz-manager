@@ -1,7 +1,7 @@
 import json
 import os
 from datetime import datetime
-from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.security import check_password_hash
 from flask_login import UserMixin
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
@@ -77,7 +77,7 @@ def get_daily_transactions(user_id, transaction_date):
     
     return user_transactions
 
-class User:
+class User(UserMixin):
     def __init__(self, user_id, username, password_hash, role='user', commission_rate=None):
         self.user_id = user_id
         self.username = username

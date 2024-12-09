@@ -4,6 +4,7 @@ from .models import User
 from config import Config
 from datetime import datetime
 import locale
+from .utils import slugify
 
 login_manager = LoginManager()
 
@@ -38,5 +39,7 @@ def create_app():
     @app.template_filter('format_money')
     def format_money(value):
         return f"$ {value:,}".replace(",", ".")
+    
+    app.jinja_env.filters['slugify'] = slugify
     
     return app

@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>
+    <i class="fas fa-file-invoice-dollar"></i>
+    Registrar Gastos
+</h2>
+
+<div class="card">
+    <div class="card-body">
+        <!-- Add Expense Form -->
+        <form id="expense-form" class="expense-form">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="form-label">Fecha</label>
+                    <input type="date" 
+                           class="form-input date-input" 
+                           value="{{ today }}" 
+                           required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Monto</label>
+                    <div class="cost-input-group">
+                        <span class="currency-symbol">$</span>
+                        <input type="number" 
+                               class="form-input amount-input"
+                               step="0.01" 
+                               min="0" 
+                               required
+                               placeholder="0.00">
+                    </div>
+                </div>
+                <div class="form-group full-width">
+                    <label class="form-label">Descripción</label>
+                    <textarea class="form-input description-input" 
+                             rows="2"
+                             placeholder="Detalles del gasto"></textarea>
+                </div>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn-text btn-save">
+                    <i class="fas fa-save"></i>
+                    <span class="btn-label">Guardar</span>
+                </button>
+            </div>
+        </form>
+
+        <!-- Recent Expenses List -->
+        <div class="expenses-list">
+            <h3 class="section-title">Gastos Recientes</h3>
+            <div class="expenses-grid" id="expenses-container">
+                {% for expense in expenses %}
+                <div class="expense-card">
+                    <div class="expense-date">{{ expense.date }}</div>
+                    <div class="expense-amount" data-price="{{ expense.amount }}"></div>
+                    <div class="expense-description">{{ expense.description or '' }}</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/expenses.js') }}"></script>
+<script src="{{ url_for('static', filename='js/dates.js') }}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Format all prices
+    document.querySelectorAll('[data-price]').forEach(el => {
+        el.textContent = formatMoney(el.dataset.price);
+    });
+});
+
+function formatMoney(amount) {
+    return `$ ${parseFloat(amount).toLocaleString('es-AR')}`;
+}
+</script>
+{% endblock %} 

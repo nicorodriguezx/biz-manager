@@ -18,10 +18,12 @@
             <i class="fas fa-box"></i>
             Retirar Productos
         </a>
+        {% if has_extractions %}
         <a href="{{ url_for('main.log_return') }}" class="btn btn-success btn-lg">
             <i class="fas fa-undo"></i>
             Devolver Productos
         </a>
+        {% endif %}
     </div>
 
     {% if active_products %}

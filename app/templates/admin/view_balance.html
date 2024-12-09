@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>
+    <i class="fas fa-balance-scale"></i>
+    Balance
+</h2>
+
+<div class="card">
+    <div class="card-body">
+        <!-- Date Filter -->
+        <form method="GET" class="filters-form">
+            <div class="date-shortcuts">
+                <button type="button" 
+                        class="date-shortcut {% if selected_range == 'today' %}active{% endif %}" 
+                        onclick="setDateRange('today')">Hoy</button>
+                <button type="button" 
+                        class="date-shortcut {% if selected_range == 'last-7' %}active{% endif %}" 
+                        onclick="setDateRange('last-7')">Últimos 7 días</button>
+                <button type="button" 
+                        class="date-shortcut {% if selected_range == 'this-month' %}active{% endif %}" 
+                        onclick="setDateRange('this-month')">Este mes</button>
+                <button type="button" 
+                        class="date-shortcut {% if selected_range == 'last-30' %}active{% endif %}" 
+                        onclick="setDateRange('last-30')">Últimos 30 días</button>
+                <button type="button" 
+                        class="date-shortcut {% if selected_range == 'custom' %}active{% endif %}" 
+                        onclick="toggleCustomDates()">Otro período de fechas</button>
+            </div>
+            <div id="custom-dates" class="date-inputs" style="display: {% if selected_range == 'custom' %}flex{% else %}none{% endif %}">
+                <input type="date" name="start_date" class="form-input" id="start_date"
+                       onchange="this.form.submit()" value="{{ start_date }}">
+                <span class="date-separator">hasta</span>
+                <input type="date" name="end_date" class="form-input" id="end_date"
+                       onchange="this.form.submit()" value="{{ end_date }}">
+            </div>
+        </form>
+
+        <!-- Summary Cards -->
+        <div class="summary-cards">
+            <div class="summary-card">
+                <div class="summary-card-title">
+                    <i class="fas fa-shopping-cart"></i>
+                    Ventas
+                </div>
+                <div class="summary-card-value text-success" data-price="{{ total_sales }}"></div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-card-title">
+                    <i class="fas fa-percentage"></i>
+                    Comisiones
+                </div>
+                <div class="summary-card-value text-danger" data-price="{{ total_commissions }}"></div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-card-title">
+                    <i class="fas fa-truck"></i>
+                    Compras
+                </div>
+                <div class="summary-card-value text-danger" data-price="{{ total_purchases }}"></div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-card-title">
+                    <i class="fas fa-file-invoice-dollar"></i>
+                    Gastos
+                </div>
+                <div class="summary-card-value text-danger" data-price="{{ total_expenses }}"></div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-card-title">
+                    <i class="fas fa-equals"></i>
+                    Balance Total
+                </div>
+                <div class="summary-card-value {% if total_balance >= 0 %}text-success{% else %}text-danger{% endif %}" 
+                     data-price="{{ total_balance }}"></div>
+            </div>
+        </div>
+
+        <!-- Balance List -->
+        <div class="balance-list">
+            {% for item in balance_items %}
+            <div class="balance-card">
+                <div class="balance-header">
+                    <div class="balance-date">{{ item.period }}</div>
+                    <div class="balance-total {% if item.balance >= 0 %}text-success{% else %}text-danger{% endif %}" 
+                         data-price="{{ item.balance }}"></div>
+                </div>
+                <div class="balance-details">
+                    <div class="balance-row expandable" onclick="toggleDetails(this, 'sales-{{ loop.index }}')">
+                        <span class="balance-concept">
+                            <i class="fas fa-chevron-right expand-icon"></i>
+                            Ventas
+                        </span>
+                        <span class="balance-amount text-success" data-price="{{ item.sales }}"></span>
+                    </div>
+                    <div id="sales-{{ loop.index }}" class="details-container" style="display: none;">
+                        {% for sale in item.sales_details %}
+                        <div class="detail-item">
+                            <div class="sale-info">
+                                <span class="detail-date">{{ sale.date }}</span>
+                                <span class="vendor-name">{{ sale.username }}</span>
+                            </div>
+                            <div class="sale-details">
+                                <span class="detail-amount" data-price="{{ sale.total_sales }}"></span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="balance-row expandable" onclick="toggleDetails(this, 'commissions-{{ loop.index }}')">
+                        <span class="balance-concept">
+                            <i class="fas fa-chevron-right expand-icon"></i>
+                            Comisiones
+                        </span>
+                        <span class="balance-amount text-danger" data-price="{{ item.commissions }}"></span>
+                    </div>
+                    <div id="commissions-{{ loop.index }}" class="details-container" style="display: none;">
+                        {% for sale in item.commission_details %}
+                        <div class="detail-item">
+                            <div class="sale-info">
+                                <span class="detail-date">{{ sale.date }}</span>
+                                <span class="vendor-name">{{ sale.username }}</span>
+                            </div>
+                            <div class="sale-details">
+                                <span class="detail-amount" data-price="{{ sale.commission }}"></span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="balance-row expandable" onclick="toggleDetails(this, 'purchases-{{ loop.index }}')">
+                        <span class="balance-concept">
+                            <i class="fas fa-chevron-right expand-icon"></i>
+                            Compras
+                        </span>
+                        <span class="balance-amount text-danger" data-price="{{ item.purchases }}"></span>
+                    </div>
+                    <div id="purchases-{{ loop.index }}" class="details-container" style="display: none;">
+                        {% for purchase in item.purchases_details %}
+                        <div class="detail-item">
+                            <div class="purchase-header expandable" onclick="toggleDetails(this, 'purchase-products-{{ loop.index }}-{{ item.period|slugify }}')">
+                                <span class="detail-date">{{ purchase.date }}</span>
+                                <div class="purchase-summary">
+                                    <i class="fas fa-chevron-right expand-icon"></i>
+                                    <span class="purchase-count">{{ purchase.products|length }} productos</span>
+                                </div>
+                                <span class="detail-amount" data-price="{{ purchase.total_cost }}"></span>
+                            </div>
+                        </div>
+                        <div id="purchase-products-{{ loop.index }}-{{ item.period|slugify }}" class="details-container" style="display: none;">
+                            {% for product in purchase.products_details %}
+                            <div class="detail-item">
+                                <div class="detail-info">
+                                    <span class="product-name">{{ product.name }}</span>
+                                    <span class="product-quantity">{{ product.quantity }} unid.</span>
+                                </div>
+                                <span class="detail-amount" data-price="{{ product.unit_cost }}"></span>
+                            </div>
+                            {% endfor %}
+                            <div class="purchase-total">
+                                <span>Total</span>
+                                <span class="total-value" data-price="{{ purchase.total_cost }}"></span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="balance-row expandable" onclick="toggleDetails(this, 'expenses-{{ loop.index }}')">
+                        <span class="balance-concept">
+                            <i class="fas fa-chevron-right expand-icon"></i>
+                            Gastos
+                        </span>
+                        <span class="balance-amount text-danger" data-price="{{ item.expenses }}"></span>
+                    </div>
+                    <div id="expenses-{{ loop.index }}" class="details-container" style="display: none;">
+                        {% for expense in item.expenses_details %}
+                        <div class="detail-item">
+                            <span class="detail-date">{{ expense.date }}</span>
+                            <span class="detail-info">{{ expense.description }}</span>
+                            <span class="detail-amount" data-price="{{ expense.amount }}"></span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/dates.js') }}"></script>
+<script src="{{ url_for('static', filename='js/balance.js') }}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('[data-price]').forEach(el => {
+        el.textContent = formatMoney(el.dataset.price);
+    });
+});
+
+function formatMoney(amount) {
+    return `$ ${parseFloat(amount).toLocaleString('es-AR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    })}`;
+}
+</script>
+{% endblock %} 

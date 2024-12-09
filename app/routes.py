@@ -1,5 +1,5 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from datetime import date, datetime
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from .models import log_transaction, get_daily_transactions, read_json, write_json, User
 from .utils.utils import calculate_daily_summary, get_active_products, get_active_products_list
@@ -74,10 +74,15 @@ def user_dashboard():
     if today_summary:
         return render_template('dashboard.html', today_summary=today_summary)
     
+    # Get today's transactions to check if there are any extractions
+    daily_transactions = get_daily_transactions(current_user.user_id, transaction_date)
+    has_extractions = any(t['type'] == 'extract' for t in daily_transactions)
+    
     active_products = get_active_products(current_user.user_id, transaction_date)
     return render_template('dashboard.html', 
                          today_summary=None,
-                         active_products=active_products)
+                         active_products=active_products,
+                         has_extractions=has_extractions)
 
 @main.route('/log/extract', methods=['GET', 'POST'])
 @login_required
