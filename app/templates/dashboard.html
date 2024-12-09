@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block content %}
+{% if today_summary %}
+    <div class="card commission-card">
+        <div class="card-body">
+            <div class="summary-item">
+                <span class="summary-label">
+                    <i class="fas fa-percentage"></i>
+                    Tu comisión hoy:
+                </span>
+                <span class="summary-value">${{ "%.2f"|format(today_summary.commission) }}</span>
+            </div>
+        </div>
+    </div>
+{% else %}
+    <div class="dashboard-buttons">
+        <a href="{{ url_for('main.log_extract') }}" class="btn btn-primary btn-lg">
+            <i class="fas fa-box"></i>
+            Retirar Productos
+        </a>
+        <a href="{{ url_for('main.log_return') }}" class="btn btn-success btn-lg">
+            <i class="fas fa-undo"></i>
+            Devolver Productos
+        </a>
+    </div>
+
+    {% if active_products %}
+    <div class="card mt-4">
+        <div class="card-body">
+            <h5 class="card-title">
+                <i class="fas fa-clipboard-list"></i>
+                Productos Activos
+            </h5>
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Producto</th>
+                            <th>Precio Unitario</th>
+                            <th>Cantidad</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for product_id, product in active_products.items() %}
+                        <tr>
+                            <td>
+                                <i class="fas fa-box"></i>
+                                {{ product.name }}
+                            </td>
+                            <td>${{ "%.2f"|format(product.price) }}</td>
+                            <td>{{ product.quantity }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+{% endif %}
+{% endblock %}

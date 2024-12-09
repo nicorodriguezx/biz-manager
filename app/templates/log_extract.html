@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Retirar Productos</h2>
+
+<form id="extractForm" onsubmit="submitForm(event)">
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Producto</th>
+                    <th>Precio</th>
+                    <th>Cantidad a Retirar</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for product in products %}
+                <tr>
+                    <td>{{ product.name }}</td>
+                    <td>${{ "%.2f"|format(product.price) }}</td>
+                    <td>
+                        <input type="number" 
+                               class="form-control empty" 
+                               name="quantity-{{ product.product_id }}"
+                               min="0" 
+                               value="0"
+                               onfocus="handleFocus(this)"
+                               onblur="handleBlur(this)">
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="button-group">
+        <button type="submit" class="btn btn-primary">
+            <i class="fas fa-check"></i>
+            Confirmar Retiro
+        </button>
+        <a href="{{ url_for('main.user_dashboard') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i>
+            Volver al Inicio
+        </a>
+    </div>
+</form>
+
+<script>
+function handleFocus(input) {
+    if (input.value === '0') {
+        input.value = '';
+        input.classList.remove('empty');
+    }
+}
+
+function handleBlur(input) {
+    if (input.value === '') {
+        input.value = '0';
+        input.classList.add('empty');
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize all number inputs
+    document.querySelectorAll('input[type="number"]').forEach(input => {
+        input.classList.add('empty');
+    });
+});
+
+function submitForm(event) {
+    event.preventDefault();
+    
+    const details = [];
+    const inputs = document.querySelectorAll('input[name^="quantity-"]');
+    
+    inputs.forEach(input => {
+        const quantity = parseInt(input.value);
+        if (quantity > 0) {
+            const productId = parseInt(input.name.split('-')[1]);
+            details.push({
+                product_id: productId,
+                quantity: quantity
+            });
+        }
+    });
+
+    if (details.length === 0) {
+        alert('Por favor ingrese al menos una cantidad');
+        return;
+    }
+
+    fetch('/log/extract', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ details: details })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            alert(data.error);
+        } else {
+            alert('Productos retirados exitosamente');
+            window.location.href = '/dashboard';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Ocurrió un error al procesar la solicitud');
+    });
+}
+</script>
+{% endblock %}

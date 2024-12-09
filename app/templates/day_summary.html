@@ -1,0 +1,221 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>
+    <i class="fas fa-calendar-day"></i>
+    Resumen del Día
+</h2>
+
+<div class="card commission-card">
+    <div class="card-body">
+        <div class="summary-item">
+            <span class="summary-label">
+                <i class="fas fa-percentage"></i>
+                Tu comisión hoy:
+            </span>
+            <span class="summary-value">${{ "%.2f"|format(commission) }}</span>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="sales-summary-header">
+            <h5>
+                <i class="fas fa-shopping-cart"></i>
+                Hoy vendiste:
+            </h5>
+            <span class="sales-total">
+                <i class="fas fa-cash-register"></i>
+                ${{ "%.2f"|format(total_sales) }}
+            </span>
+        </div>
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Producto</th>
+                        <th>Unidades</th>
+                        <th>Precio</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for product_id, quantity in sold_units.items() %}
+                    <tr>
+                        <td>{{ products[product_id].name }}</td>
+                        <td>{{ quantity }}</td>
+                        <td>${{ "%.2f"|format(products[product_id].price) }}</td>
+                        <td>${{ "%.2f"|format(quantity * products[product_id].price) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="card payment-method-card">
+    <div class="card-body">
+        <h5 class="card-title">
+            <i class="fas fa-money-bill-wave"></i>
+            Método de Devolución
+        </h5>
+        <div class="payment-total">
+            <div class="summary-item">
+                <span class="summary-label">
+                    <i class="fas fa-hand-holding-usd"></i>
+                    Monto a Devolver
+                </span>
+                <span class="summary-value" id="montoDevolver">${{ "%.2f"|format(total_sales - commission) }}</span>
+            </div>
+        </div>
+        <form id="paymentForm">
+            <div class="form-group">
+                <label for="efectivo" class="form-label">Efectivo</label>
+                <div class="input-group">
+                    <span class="input-group-text">$</span>
+                    <input type="number" 
+                           class="form-control empty" 
+                           id="efectivo" 
+                           step="0.01" 
+                           min="0" 
+                           value="0"
+                           onfocus="handleFocus(this)"
+                           onblur="handleBlur(this)">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="mercadopago" class="form-label">Transferencia MercadoPago</label>
+                <div class="input-group">
+                    <span class="input-group-text">$</span>
+                    <input type="number" 
+                           class="form-control empty" 
+                           id="mercadopago" 
+                           step="0.01" 
+                           min="0" 
+                           value="0"
+                           onfocus="handleFocus(this)"
+                           onblur="handleBlur(this)">
+                </div>
+            </div>
+            <div class="alert alert-info" role="alert">
+                Total ingresado: $<span id="totalIngresado">0.00</span>
+            </div>
+            <div class="button-group">
+                <button type="submit" class="btn btn-primary" disabled id="submitBtn">
+                    <i class="fas fa-check"></i>
+                    Confirmar Devolución
+                </button>
+                <button type="button" class="btn btn-secondary" onclick="handleReturn()">
+                    <i class="fas fa-arrow-left"></i>
+                    Volver al Inicio
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function handleFocus(input) {
+    if (input.value === '0') {
+        input.value = '';
+        input.classList.remove('empty');
+    }
+}
+
+function handleBlur(input) {
+    if (input.value === '') {
+        input.value = '0';
+        input.classList.add('empty');
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const efectivoInput = document.getElementById('efectivo');
+    const mercadopagoInput = document.getElementById('mercadopago');
+    const totalSpan = document.getElementById('totalIngresado');
+    const submitBtn = document.getElementById('submitBtn');
+    const montoDevolver = parseFloat(document.getElementById('montoDevolver').textContent.replace('$', ''));
+
+    function updateTotals(sourceInput, targetInput) {
+        let sourceValue = parseFloat(sourceInput.value) || 0;
+        
+        // Ensure source value doesn't exceed monto a devolver
+        if (sourceValue > montoDevolver) {
+            sourceValue = montoDevolver;
+            sourceInput.value = sourceValue.toFixed(2);
+        }
+        
+        // Calculate target value
+        let targetValue = montoDevolver - sourceValue;
+        targetInput.value = targetValue.toFixed(2);
+        
+        // Update total and check if it matches monto a devolver
+        const total = parseFloat(efectivoInput.value || 0) + parseFloat(mercadopagoInput.value || 0);
+        totalSpan.textContent = total.toFixed(2);
+        
+        // Enable/disable submit button
+        submitBtn.disabled = Math.abs(total - montoDevolver) > 0.01;
+    }
+
+    efectivoInput.addEventListener('input', () => updateTotals(efectivoInput, mercadopagoInput));
+    mercadopagoInput.addEventListener('input', () => updateTotals(mercadopagoInput, efectivoInput));
+
+    // Form submission
+    document.getElementById('paymentForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = {
+            efectivo: parseFloat(efectivoInput.value),
+            mercadopago: parseFloat(mercadopagoInput.value)
+        };
+
+        fetch('/return-payment', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                window.location.href = data.redirect_url;
+            } else {
+                alert(data.error || 'Error al procesar el pago');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Ocurrió un error al procesar la solicitud');
+        });
+    });
+
+    [efectivoInput, mercadopagoInput].forEach(input => {
+        input.classList.add('empty');
+        input.addEventListener('focus', () => handleFocus(input));
+        input.addEventListener('blur', () => handleBlur(input));
+    });
+});
+
+async function handleReturn() {
+    try {
+        const response = await fetch('/cancel-return', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+            window.location.href = data.redirect_url;
+        } else {
+            alert(data.error || 'Error al cancelar la devolución');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Ocurrió un error al procesar la solicitud');
+    }
+}
+</script>
+{% endblock %} 
