@@ -90,22 +90,30 @@ function addPurchaseRow() {
                        class="form-input quantity-input"
                        min="1" 
                        value="1"
-                       onchange="updateRowTotal(${rowId})">
+                       onchange="updateRowPrices(${rowId})">
             </div>
             <div class="form-group">
                 <label class="form-label">Costo Unitario</label>
                 <div class="cost-input-group">
                     <span class="currency-symbol">$</span>
                     <input type="number" 
-                           class="form-input cost-input"
+                           class="form-input unit-cost-input"
                            step="0.01" 
                            min="0"
-                           onchange="updateRowTotal(${rowId})">
+                           onchange="updateRowFromUnit(${rowId})">
                 </div>
             </div>
-        </div>
-        <div class="purchase-row-summary">
-            <span class="row-total">Total: $ 0.00</span>
+            <div class="form-group">
+                <label class="form-label">Costo Total</label>
+                <div class="cost-input-group">
+                    <span class="currency-symbol">$</span>
+                    <input type="number" 
+                           class="form-input total-cost-input"
+                           step="0.01" 
+                           min="0"
+                           onchange="updateRowFromTotal(${rowId})">
+                </div>
+            </div>
         </div>
     `;
     
@@ -122,14 +130,48 @@ function updateRowTotal(rowId) {
     updateTotalCost();
 }
 
+function updateRowFromUnit(rowId) {
+    const row = document.querySelectorAll('.purchase-row')[rowId - 1];
+    const quantity = parseFloat(row.querySelector('.quantity-input').value) || 0;
+    const unitCost = parseFloat(row.querySelector('.unit-cost-input').value) || 0;
+    const totalCost = quantity * unitCost;
+    
+    // Update total cost input
+    row.querySelector('.total-cost-input').value = totalCost.toFixed(2);
+    updateTotalCost();
+}
+
+function updateRowFromTotal(rowId) {
+    const row = document.querySelectorAll('.purchase-row')[rowId - 1];
+    const quantity = parseFloat(row.querySelector('.quantity-input').value) || 0;
+    const totalCost = parseFloat(row.querySelector('.total-cost-input').value) || 0;
+    
+    // Calculate and update unit cost
+    const unitCost = quantity > 0 ? totalCost / quantity : 0;
+    row.querySelector('.unit-cost-input').value = unitCost.toFixed(2);
+    updateTotalCost();
+}
+
+function updateRowPrices(rowId) {
+    const row = document.querySelectorAll('.purchase-row')[rowId - 1];
+    const unitCost = parseFloat(row.querySelector('.unit-cost-input').value);
+    
+    // If unit cost exists, update total based on that
+    if (unitCost) {
+        updateRowFromUnit(rowId);
+    } else {
+        // Otherwise, update based on total cost
+        updateRowFromTotal(rowId);
+    }
+}
+
 function updateTotalCost() {
     const rows = document.querySelectorAll('.purchase-row');
     let total = 0;
     
     rows.forEach(row => {
-        const quantity = parseFloat(row.querySelector('.quantity-input').value) || 0;
-        const unitCost = parseFloat(row.querySelector('.cost-input').value) || 0;
-        total += quantity * unitCost;
+        const totalCost = parseFloat(row.querySelector('.total-cost-input').value) || 0;
+        total += totalCost;
     });
     
     document.getElementById('total-cost').textContent = formatMoney(total);
@@ -153,7 +195,7 @@ document.getElementById('purchase-form').addEventListener('submit', function(e) 
     rows.forEach(row => {
         const productId = row.querySelector('.product-select').value;
         const quantity = row.querySelector('.quantity-input').value;
-        const unitCost = row.querySelector('.cost-input').value;
+        const unitCost = row.querySelector('.unit-cost-input').value;
         
         if (productId && quantity && unitCost) {
             items.push({
@@ -206,4 +248,18 @@ document.getElementById('purchase-form').addEventListener('submit', function(e) 
     });
 });
 </script>
+
+<style>
+/* Add some spacing between cost inputs */
+.cost-input-group {
+    margin-bottom: 0.5rem;
+}
+
+/* Make cost inputs slightly smaller to fit side by side */
+@media (min-width: 768px) {
+    .purchase-details {
+        grid-template-columns: 2fr 1fr 1fr 1fr;
+    }
+}
+</style>
 {% endblock %} 

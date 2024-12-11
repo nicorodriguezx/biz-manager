@@ -1,9 +1,0 @@
-[
-    {
-        "user_id": 101,
-        "username": "a",
-        "password_hash": "scrypt:32768:8:1$R4ScslCT19reBN9E$4b256c624e00b24aa1dd11ba2e0118c265f0c8cbb7e294105a691e9a5d020edac01d371921e06b62ab91d9f82d08d8df6122d6d62cf3b23355160ab3db16bfb8",
-        "role": "admin",
-        "exists": "true"
-    }
-]

@@ -35,7 +35,7 @@ def manage_products():
                 'name': data['name'],
                 'price': float(data['price']),
                 'min_stock': int(data.get('min_stock', 0)),
-                'description': data.get('description', '')
+                'exists': 'true'
             }
             
             products.append(new_product)
@@ -56,7 +56,6 @@ def manage_products():
                     product['name'] = data['name']
                     product['price'] = float(data['price'])
                     product['min_stock'] = int(data.get('min_stock', product.get('min_stock', 0)))
-                    product['description'] = data.get('description', product.get('description', ''))
                     break
             
             write_json('products.json', products)
@@ -79,7 +78,12 @@ def manage_products():
                             'error': 'No se puede eliminar un producto que ya ha sido utilizado en transacciones.'
                         }, 400
             
-            products = [p for p in products if p['product_id'] != product_id]
+            # Soft delete by setting exists=false
+            for product in products:
+                if product['product_id'] == product_id:
+                    product['exists'] = 'false'
+                    break
+                
             write_json('products.json', products)
             return {'success': True}
         except Exception as e:
@@ -391,7 +395,7 @@ def manage_purchases():
     products = read_json('products.json')
     return render_template('admin/purchases.html', products=products) 
 
-@admin.route('/expenses', methods=['GET', 'POST'])
+@admin.route('/expenses', methods=['GET', 'POST', 'PUT', 'DELETE'])
 @login_required
 def manage_expenses():
     if not current_user.is_admin:
@@ -414,6 +418,36 @@ def manage_expenses():
             expenses.append(new_expense)
             write_json('expenses.json', expenses)
             
+            return {'success': True}
+        except Exception as e:
+            return {'success': False, 'error': str(e)}, 400
+            
+    elif request.method == 'PUT':
+        try:
+            data = request.json
+            expenses = read_json('expenses.json')
+            
+            expense_id = int(data['expense_id'])
+            for expense in expenses:
+                if expense['expense_id'] == expense_id:
+                    expense['date'] = data['date']
+                    expense['amount'] = float(data['amount'])
+                    expense['description'] = data.get('description', '')
+                    break
+            
+            write_json('expenses.json', expenses)
+            return {'success': True}
+        except Exception as e:
+            return {'success': False, 'error': str(e)}, 400
+            
+    elif request.method == 'DELETE':
+        try:
+            expense_id = int(request.json['expense_id'])
+            expenses = read_json('expenses.json')
+            
+            # Hard delete the expense
+            expenses = [e for e in expenses if e['expense_id'] != expense_id]
+            write_json('expenses.json', expenses)
             return {'success': True}
         except Exception as e:
             return {'success': False, 'error': str(e)}, 400

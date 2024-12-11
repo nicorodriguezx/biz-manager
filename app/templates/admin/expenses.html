@@ -49,10 +49,18 @@
             <h3 class="section-title">Gastos Recientes</h3>
             <div class="expenses-grid" id="expenses-container">
                 {% for expense in expenses %}
-                <div class="expense-card">
+                <div class="expense-card" data-id="{{ expense.expense_id }}">
                     <div class="expense-date">{{ expense.date }}</div>
                     <div class="expense-amount" data-price="{{ expense.amount }}"></div>
                     <div class="expense-description">{{ expense.description or '' }}</div>
+                    <div class="expense-actions">
+                        <button type="button" class="btn-text btn-primary" onclick='editExpense({{ expense|tojson|safe }})'>
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button type="button" class="btn-text btn-delete" onclick="deleteExpense({{ expense.expense_id }})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
                 </div>
                 {% endfor %}
             </div>
@@ -60,18 +68,155 @@
     </div>
 </div>
 
-<script src="{{ url_for('static', filename='js/expenses.js') }}"></script>
-<script src="{{ url_for('static', filename='js/dates.js') }}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Format all prices
+    // Format all prices on load
     document.querySelectorAll('[data-price]').forEach(el => {
         el.textContent = formatMoney(el.dataset.price);
     });
+
+    // Handle form submission
+    const form = document.getElementById('expense-form');
+    form.addEventListener('submit', submitExpense);
 });
 
 function formatMoney(amount) {
     return `$ ${parseFloat(amount).toLocaleString('es-AR')}`;
+}
+
+function submitExpense(event) {
+    event.preventDefault();
+    
+    const data = {
+        date: event.target.querySelector('.date-input').value,
+        amount: parseFloat(event.target.querySelector('.amount-input').value),
+        description: event.target.querySelector('.description-input').value
+    };
+
+    fetch('/admin/expenses', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            window.location.reload();
+        } else {
+            alert(data.error || 'Error al registrar el gasto');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al procesar la solicitud');
+    });
+}
+
+function editExpense(expense) {
+    const card = document.querySelector(`div[data-id="${expense.expense_id}"]`);
+    card.classList.add('edit-mode');
+    card.innerHTML = `
+        <div class="form-grid">
+            <div class="form-group">
+                <label class="form-label">Fecha</label>
+                <input type="date" class="form-input" value="${expense.date}" id="edit-date-${expense.expense_id}" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Monto</label>
+                <div class="cost-input-group">
+                    <span class="currency-symbol">$</span>
+                    <input type="number" class="form-input" value="${expense.amount}" id="edit-amount-${expense.expense_id}" step="0.01" min="0" required>
+                </div>
+            </div>
+            <div class="form-group full-width">
+                <label class="form-label">Descripción</label>
+                <textarea class="form-input" id="edit-description-${expense.expense_id}" rows="2">${expense.description || ''}</textarea>
+            </div>
+        </div>
+        <div class="expense-actions">
+            <button type="button" class="btn-text btn-save" onclick="saveEdit(${expense.expense_id})">
+                <i class="fas fa-save"></i>
+            </button>
+            <button type="button" class="btn-text btn-cancel" onclick="cancelEdit(${expense.expense_id}, ${JSON.stringify(expense)})">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    `;
+}
+
+function saveEdit(expenseId) {
+    const data = {
+        expense_id: expenseId,
+        date: document.getElementById(`edit-date-${expenseId}`).value,
+        amount: parseFloat(document.getElementById(`edit-amount-${expenseId}`).value),
+        description: document.getElementById(`edit-description-${expenseId}`).value
+    };
+
+    fetch('/admin/expenses', {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            window.location.reload();
+        } else {
+            alert(data.error || 'Error al actualizar el gasto');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al procesar la solicitud');
+    });
+}
+
+function cancelEdit(expenseId, expense) {
+    const card = document.querySelector(`div[data-id="${expenseId}"]`);
+    card.classList.remove('edit-mode');
+    card.innerHTML = `
+        <div class="expense-date">${expense.date}</div>
+        <div class="expense-amount">${formatMoney(expense.amount)}</div>
+        <div class="expense-description">${expense.description || ''}</div>
+        <div class="expense-actions">
+            <button type="button" class="btn-text btn-primary" onclick='editExpense(${JSON.stringify(expense)})'>
+                <i class="fas fa-edit"></i>
+            </button>
+            <button type="button" class="btn-text btn-delete" onclick="deleteExpense(${expenseId})">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+    `;
+}
+
+function deleteExpense(expenseId) {
+    if (!confirm('¿Está seguro de eliminar este gasto?')) {
+        return;
+    }
+
+    fetch('/admin/expenses', {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ expense_id: expenseId })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            window.location.reload();
+        } else {
+            alert(data.error || 'Error al eliminar el gasto');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al procesar la solicitud');
+    });
 }
 </script>
 {% endblock %} 

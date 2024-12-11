@@ -8,12 +8,12 @@ BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 DATA_DIR = os.path.join(BASE_DIR, 'data')
 
 def read_json(file_name):
-    with open(os.path.join(DATA_DIR, file_name), 'r') as f:
+    with open(os.path.join(DATA_DIR, file_name), 'r', encoding='utf-8') as f:
         return json.load(f)
 
 def write_json(file_name, data):
-    with open(os.path.join(DATA_DIR, file_name), 'w') as f:
-        json.dump(data, f, indent=4)
+    with open(os.path.join(DATA_DIR, file_name), 'w', encoding='utf-8') as f:
+        json.dump(data, f, indent=4, ensure_ascii=False)
 
 def log_transaction(user_id, transaction_type, details):
     """Log extracted or returned products."""

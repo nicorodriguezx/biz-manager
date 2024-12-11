@@ -1,4 +1,5 @@
 bizuser_pythonanywhere_com_wsgi.py
+app/data/*.json
 
 # Python
 __pycache__/
