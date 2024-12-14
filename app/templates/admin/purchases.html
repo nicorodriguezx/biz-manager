@@ -42,7 +42,7 @@
 </div>
 
 <script>
-const products = {{ products|tojson|safe }};
+const products = {{ products|tojson|safe }}.sort((a, b) => a.name.localeCompare(b.name));
 
 function togglePurchaseForm() {
     const form = document.getElementById('purchase-form');

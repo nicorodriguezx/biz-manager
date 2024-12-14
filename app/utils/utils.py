@@ -77,7 +77,8 @@ def get_active_products_list(user_id, transaction_date):
     if not active_products:
         return []
         
-    return [
+    # Create and sort the list alphabetically by name
+    products_list = [
         {
             'product_id': product_id,
             'name': product['name'],
@@ -86,6 +87,8 @@ def get_active_products_list(user_id, transaction_date):
         }
         for product_id, product in active_products.items()
     ]
+    products_list.sort(key=lambda x: x['name'])
+    return products_list
 
 def slugify(text):
     """Convert text to URL-friendly slug"""

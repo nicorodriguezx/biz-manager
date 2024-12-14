@@ -129,7 +129,7 @@ def manage_users():
         new_user = {
             'user_id': next_id,
             'username': data['username'],
-            'password': generate_password_hash(data['password']),
+            'password_hash': generate_password_hash(data['password']),
             'role': data['role'],
             'exists': 'true'
         }
@@ -270,7 +270,9 @@ def view_stock():
     selected_range = get_range_type(start_date, end_date)
     
     try:
-        purchases = read_json('stock_purchases.json')
+        # Change to use purchases and purchase_details
+        purchases = read_json('purchases.json')
+        purchase_details = read_json('purchase_details.json')
         transactions = read_json('transactions.json')
         transaction_details = read_json('transaction_details.json')
         products = read_json('products.json')
@@ -289,8 +291,7 @@ def view_stock():
                 'period_sold': 0  # Only for selected period
             }
         
-        # Calculate period purchases
-        purchase_details = read_json('purchase_details.json')
+        # Calculate period purchases using purchase_details
         for purchase in period_purchases:
             details = [d for d in purchase_details if d['purchase_id'] == purchase['purchase_id']]
             for detail in details:
@@ -314,6 +315,16 @@ def view_stock():
             for detail in details:
                 pid = detail['product_id']
                 stock[pid]['current'] += detail['quantity']
+        
+        # Subtract all extractions and add returns
+        for transaction in transactions:
+            details = [d for d in transaction_details if d['transaction_id'] == transaction['transaction_id']]
+            for detail in details:
+                pid = detail['product_id']
+                if transaction['type'] == 'extract':
+                    stock[pid]['current'] -= detail['quantity']
+                else:  # return
+                    stock[pid]['current'] += detail['quantity']
         
         # Calculate total value of current stock
         total_value = sum(

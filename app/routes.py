@@ -95,7 +95,8 @@ def log_extract():
         log_transaction(current_user.user_id, "extract", details)
         return {"message": "Extracción registrada exitosamente"}
 
-    products = read_json('products.json')
+    # Get products and sort them alphabetically by name
+    products = sorted(read_json('products.json'), key=lambda x: x['name'])
     return render_template('log_extract.html', products=products)
 
 @main.route('/log/return', methods=['GET', 'POST'])
@@ -135,6 +136,8 @@ def log_return():
     # For GET request
     transaction_date = date.today().isoformat()
     active_products = get_active_products_list(current_user.user_id, transaction_date)
+    # Sort active products alphabetically by name
+    active_products.sort(key=lambda x: x['name'])
     return render_template('log_return.html', products=active_products)
 
 @main.route('/day-summary')
