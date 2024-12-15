@@ -8,8 +8,8 @@
             <thead>
                 <tr>
                     <th>Producto</th>
-                    <th>Precio</th>
-                    <th>Cantidad a Retirar</th>
+                    <th style="width: 90px;">Precio</th>
+                    <th style="width: 100px;">Cantidad</th>
                 </tr>
             </thead>
             <tbody>
@@ -24,7 +24,8 @@
                                min="0" 
                                value="0"
                                onfocus="handleFocus(this)"
-                               onblur="handleBlur(this)">
+                               onblur="handleBlur(this)"
+                               style="min-width: 70px;">
                     </td>
                 </tr>
                 {% endfor %}
@@ -34,11 +35,11 @@
     <div class="button-group">
         <button type="submit" class="btn btn-primary">
             <i class="fas fa-check"></i>
-            Confirmar Retiro
+            <span>Confirmar Retiro</span>
         </button>
         <a href="{{ url_for('main.user_dashboard') }}" class="btn btn-secondary">
             <i class="fas fa-arrow-left"></i>
-            Volver al Inicio
+            <span>Volver al Inicio</span>
         </a>
     </div>
 </form>
