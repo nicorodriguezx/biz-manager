@@ -95,8 +95,10 @@ def log_extract():
         log_transaction(current_user.user_id, "extract", details)
         return {"message": "Extracción registrada exitosamente"}
 
-    # Get products and sort them alphabetically by name
-    products = sorted(read_json('products.json'), key=lambda x: x['name'])
+    # Get products, filter active ones and sort them alphabetically by name
+    all_products = read_json('products.json')
+    active_products = [p for p in all_products if p['exists'] == "true"]
+    products = sorted(active_products, key=lambda x: x['name'])
     return render_template('log_extract.html', products=products)
 
 @main.route('/log/return', methods=['GET', 'POST'])

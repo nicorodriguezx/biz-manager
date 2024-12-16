@@ -20,6 +20,7 @@ def manage_products():
         
     if request.method == 'GET':
         products = read_json('products.json')
+        products.sort(key=lambda x: x['name'].strip().lower())
         return render_template('admin/products.html', products=products)
         
     elif request.method == 'POST':
@@ -65,28 +66,21 @@ def manage_products():
             
     elif request.method == 'DELETE':
         try:
-            product_id = int(request.json['product_id'])
+            print("DELETE request data:", request.get_json())  # Debug print
+            product_id = int(request.get_json()['product_id'])
             products = read_json('products.json')
-            
-            # Check if product is in use in any transaction
-            transactions = read_json('transactions.json')
-            for transaction in transactions:
-                for detail in transaction['details']:
-                    if detail['product_id'] == product_id:
-                        return {
-                            'success': False, 
-                            'error': 'No se puede eliminar un producto que ya ha sido utilizado en transacciones.'
-                        }, 400
             
             # Soft delete by setting exists=false
             for product in products:
                 if product['product_id'] == product_id:
                     product['exists'] = 'false'
+                    print(f"Product {product_id} marked as deleted")  # Debug print
                     break
-                
+                    
             write_json('products.json', products)
             return {'success': True}
         except Exception as e:
+            print("Error in DELETE:", str(e))  # Debug print
             return {'success': False, 'error': str(e)}, 400
             
     # Add a default return for unexpected methods
@@ -270,7 +264,6 @@ def view_stock():
     selected_range = get_range_type(start_date, end_date)
     
     try:
-        # Change to use purchases and purchase_details
         purchases = read_json('purchases.json')
         purchase_details = read_json('purchase_details.json')
         transactions = read_json('transactions.json')
@@ -282,13 +275,13 @@ def view_stock():
         period_transactions = [t for t in transactions if start_date <= t['timestamp'].split('T')[0] <= end_date]
         
         stock = {}
-        for product in products:
+        for product in sorted(products, key=lambda x: x['name'].strip().lower()):
             pid = product['product_id']
             stock[pid] = {
                 'product': product,
-                'current': 0,  # Will be calculated from all-time data
-                'period_purchased': 0,  # Only for selected period
-                'period_sold': 0  # Only for selected period
+                'current': 0,
+                'period_purchased': 0,
+                'period_sold': 0
             }
         
         # Calculate period purchases using purchase_details

@@ -202,11 +202,22 @@ function deleteProduct(productId) {
         return;
     }
 
-    fetch(`/admin/products/${productId}`, {
-        method: 'DELETE'
+    const data = { product_id: productId };
+    console.log('Sending delete request with data:', data);
+
+    fetch('/admin/products', {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
     })
-    .then(response => response.json())
+    .then(response => {
+        console.log('Response status:', response.status);
+        return response.json();
+    })
     .then(data => {
+        console.log('Response data:', data);
         if (data.success) {
             window.location.reload();
         } else {
