@@ -1,6 +1,6 @@
 import json
 import os
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from werkzeug.security import check_password_hash
 from flask_login import UserMixin
 
@@ -17,6 +17,10 @@ def write_json(file_name, data):
 
 def log_transaction(user_id, transaction_type, details):
     """Log extracted or returned products."""
+    # Create GMT-3 timestamp
+    gmt3_offset = timezone(timedelta(hours=-3))
+    current_time = datetime.now(gmt3_offset).isoformat()
+
     # Load both files
     transactions = read_json('transactions.json')
     try:
@@ -30,7 +34,7 @@ def log_transaction(user_id, transaction_type, details):
         "transaction_id": transaction_id,
         "user_id": user_id,
         "type": transaction_type,
-        "timestamp": datetime.now().isoformat()
+        "timestamp": current_time  # Now in GMT-3
     }
     
     # Create transaction details
@@ -83,7 +87,8 @@ class User(UserMixin):
         self.username = username
         self.password_hash = password_hash
         self.role = role
-        self.commission_rate = commission_rate
+        # Convert commission_rate to float if it exists
+        self.commission_rate = float(commission_rate) if commission_rate is not None else None
         
     @property
     def is_admin(self):
@@ -109,12 +114,17 @@ class User(UserMixin):
         users = read_json('users.json')
         user_data = next((u for u in users if u['user_id'] == int(user_id)), None)
         if user_data:
+            commission_rate = user_data.get('commission_rate')
+            # Convert commission_rate to float if it exists
+            if commission_rate is not None:
+                commission_rate = float(commission_rate)
+            
             return User(
                 user_id=user_data['user_id'],
                 username=user_data['username'],
                 password_hash=user_data['password_hash'],
                 role=user_data.get('role', 'user'),
-                commission_rate=user_data.get('commission_rate')
+                commission_rate=commission_rate
             )
         return None
         

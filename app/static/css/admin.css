@@ -981,6 +981,64 @@
     font-weight: 600;
 }
 
+.detail-edit-form {
+    display: grid;
+    gap: 1rem;
+    padding: 1rem;
+    background: white;
+    border-radius: 0.5rem;
+}
+
+.quantity-cost-inputs {
+    display: grid;
+    gap: 1rem;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.form-label {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.cost-input-group {
+    display: flex;
+    align-items: center;
+    border: 1px solid var(--border-color);
+    border-radius: 0.25rem;
+    overflow: hidden;
+}
+
+.currency-symbol {
+    padding: 0.5rem;
+    background: var(--background-color);
+    color: var(--text-secondary);
+    border-right: 1px solid var(--border-color);
+}
+
+.cost-input-group .form-input {
+    border: none;
+    border-radius: 0;
+}
+
+.detail-actions {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: flex-end;
+}
+
+.new-detail {
+    background: #f3f4f6;
+    border-radius: 0.5rem;
+    margin-top: 1rem;
+}
+
+@media (min-width: 768px) {
+}
 @media (min-width: 640px) {
     .purchase-details {
         grid-template-columns: 2fr 1fr 1fr 1fr;
@@ -991,6 +1049,9 @@
         border: none;
         padding: 0;
         margin: 0;
+    }
+    .quantity-cost-inputs {
+        grid-template-columns: repeat(2, 1fr);
     }
 }
 

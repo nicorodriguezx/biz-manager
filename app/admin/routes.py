@@ -1,5 +1,5 @@
 # Standard library imports
-from datetime import datetime, date
+from datetime import datetime, date, timedelta, timezone
 
 # Third party imports
 from flask import render_template, request, redirect, url_for, flash
@@ -361,12 +361,16 @@ def manage_purchases():
             total_cost = sum(float(item['quantity']) * float(item['unit_cost']) 
                            for item in data['items'])
             
+            # Create GMT-3 timestamp
+            gmt3_offset = timezone(timedelta(hours=-3))
+            current_time = datetime.now(gmt3_offset).isoformat()
+            
             # Create new purchase
             purchase_id = len(purchases) + 1
             new_purchase = {
                 'purchase_id': purchase_id,
                 'date': date.today().isoformat(),
-                'created_at': datetime.now().isoformat(),
+                'created_at': current_time,  # Now in GMT-3
                 'total_cost': total_cost
             }
             
@@ -411,12 +415,16 @@ def manage_expenses():
             data = request.json
             expenses = read_json('expenses.json')
             
+            # Create GMT-3 timestamp
+            gmt3_offset = timezone(timedelta(hours=-3))
+            current_time = datetime.now(gmt3_offset).isoformat()
+            
             new_expense = {
                 'expense_id': len(expenses) + 1,
                 'date': data['date'],
                 'amount': float(data['amount']),
                 'description': data.get('description', ''),
-                'created_at': datetime.now().isoformat()
+                'created_at': current_time  # Now in GMT-3
             }
             
             expenses.append(new_expense)
@@ -482,7 +490,7 @@ def view_purchases():
     try:
         purchases = read_json('purchases.json')
         purchase_details = read_json('purchase_details.json')
-        products = read_json('products.json')
+        products = read_json('products.json')  # Load all products
         
         # Filter by period
         purchases = [p for p in purchases if start_date <= p['date'] <= end_date]
@@ -501,6 +509,7 @@ def view_purchases():
         return render_template(
             'admin/view_purchases.html',
             purchases=purchases,
+            products=products,  # Pass all products to the template
             total_spent=sum(p['total_cost'] for p in purchases),
             start_date=start_date,
             end_date=end_date,
@@ -511,11 +520,12 @@ def view_purchases():
         return render_template(
             'admin/view_purchases.html',
             purchases=[],
+            products=[],  # Pass empty products list
             total_spent=0,
             start_date=start_date,
             end_date=end_date,
             selected_range=selected_range
-        ) 
+        )
 
 @admin.route('/transactions')
 @login_required
@@ -884,3 +894,78 @@ def view_balance():
             end_date=end_date,
             selected_range=selected_range
         ) 
+
+@admin.route('/purchase-details', methods=['POST'])
+@login_required
+def add_purchase_detail():
+    if not current_user.is_admin:
+        return {"error": "Acceso no autorizado"}, 403
+        
+    try:
+        data = request.json
+        purchase_details = read_json('purchase_details.json')
+        
+        new_detail = {
+            'detail_id': len(purchase_details) + 1,
+            'purchase_id': data['purchase_id'],
+            'product_id': data['product_id'],
+            'quantity': data['quantity'],
+            'unit_cost': data['unit_cost']
+        }
+        
+        purchase_details.append(new_detail)
+        write_json('purchase_details.json', purchase_details)
+        
+        # Update purchase total cost
+        purchases = read_json('purchases.json')
+        for purchase in purchases:
+            if purchase['purchase_id'] == data['purchase_id']:
+                details = [d for d in purchase_details if d['purchase_id'] == purchase['purchase_id']]
+                purchase['total_cost'] = sum(d['quantity'] * d['unit_cost'] for d in details)
+                break
+                
+        write_json('purchases.json', purchases)
+        
+        return {"success": True}
+    except Exception as e:
+        return {"error": str(e)}, 400
+
+@admin.route('/purchase-details/<int:detail_id>', methods=['PUT', 'DELETE'])
+@login_required
+def manage_purchase_detail(detail_id):
+    if not current_user.is_admin:
+        return {"error": "Acceso no autorizado"}, 403
+        
+    try:
+        purchase_details = read_json('purchase_details.json')
+        detail = next((d for d in purchase_details if d['detail_id'] == detail_id), None)
+        
+        if not detail:
+            return {"error": "Detalle no encontrado"}, 404
+            
+        if request.method == 'DELETE':
+            purchase_details = [d for d in purchase_details if d['detail_id'] != detail_id]
+            write_json('purchase_details.json', purchase_details)
+            
+        elif request.method == 'PUT':
+            data = request.json
+            detail.update({
+                'product_id': data['product_id'],
+                'quantity': data['quantity'],
+                'unit_cost': data['unit_cost']
+            })
+            write_json('purchase_details.json', purchase_details)
+            
+        # Update purchase total cost
+        purchases = read_json('purchases.json')
+        for purchase in purchases:
+            if purchase['purchase_id'] == detail['purchase_id']:
+                details = [d for d in purchase_details if d['purchase_id'] == purchase['purchase_id']]
+                purchase['total_cost'] = sum(d['quantity'] * d['unit_cost'] for d in details)
+                break
+                
+        write_json('purchases.json', purchases)
+        
+        return {"success": True}
+    except Exception as e:
+        return {"error": str(e)}, 400 

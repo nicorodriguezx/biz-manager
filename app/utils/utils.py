@@ -33,15 +33,24 @@ def calculate_daily_summary(user_id, transaction_date):
     }
     total_sales = sum(sold_units[pid] * product_prices[pid] for pid in sold_units)
     
-    # Get user's commission rate
+    # Get user's commission rate and add debug prints
     user = User.get_user(user_id)
-    commission = total_sales * user.commission_rate
+    print(f"Debug - User ID: {user_id}")
+    print(f"Debug - Username: {user.username}")
+    print(f"Debug - Commission Rate: {user.commission_rate}")
+    print(f"Debug - Total Sales: ${total_sales}")
+    
+    # Ensure commission_rate is a float and handle None case
+    commission_rate = float(user.commission_rate) if user.commission_rate is not None else 0.0
+    commission = total_sales * commission_rate
+    
+    print(f"Debug - Calculated Commission: ${commission}")
 
     return {
         "sold_units": sold_units, 
         "total_sales": total_sales, 
         "commission": commission,
-        "commission_rate": user.commission_rate
+        "commission_rate": commission_rate
     }
 
 def get_active_products(user_id, transaction_date):

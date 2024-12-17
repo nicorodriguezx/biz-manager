@@ -88,15 +88,24 @@ function submitForm(event) {
     const inputs = document.querySelectorAll('input[name^="quantity-"]');
     const finishDay = document.getElementById('finishDay').checked;
     
+    // Create a map to consolidate quantities for each product
+    const productQuantities = new Map();
+    
     inputs.forEach(input => {
-        const quantity = parseInt(input.value);
+        const quantity = parseInt(input.value) || 0;
         if (quantity > 0) {
             const productId = parseInt(input.name.split('-')[1]);
-            details.push({
-                product_id: productId,
-                quantity: quantity
-            });
+            // Add to or update the map
+            productQuantities.set(productId, (productQuantities.get(productId) || 0) + quantity);
         }
+    });
+
+    // Convert map to array of details
+    productQuantities.forEach((quantity, productId) => {
+        details.push({
+            product_id: productId,
+            quantity: quantity
+        });
     });
 
     if (details.length === 0 && !finishDay) {

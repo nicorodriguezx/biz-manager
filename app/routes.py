@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import date, datetime, timezone, timedelta
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from .models import log_transaction, get_daily_transactions, read_json, write_json, User
@@ -178,7 +178,11 @@ def return_payment():
         mercadopago = float(data.get('mercadopago', 0))
 
         transaction_date = date.today().isoformat()
-        current_time = datetime.now().isoformat()
+        
+        # Create GMT-3 timestamp
+        gmt3_offset = timezone(timedelta(hours=-3))
+        current_time = datetime.now(gmt3_offset).isoformat()
+
         summary = calculate_daily_summary(current_user.user_id, transaction_date)
         total_return = summary['total_sales'] - summary['commission']
 
@@ -242,16 +246,28 @@ def cancel_return():
         # Get today's transactions
         transaction_date = date.today().isoformat()
         transactions = read_json('transactions.json')
+        transaction_details = read_json('transaction_details.json')
         
         # Find and remove the last return transaction for today
+        transaction_id = None
         for i in range(len(transactions) - 1, -1, -1):
             transaction = transactions[i]
             if (transaction['user_id'] == current_user.user_id and 
                 transaction['type'] == 'return' and 
                 transaction['timestamp'].startswith(transaction_date)):
+                transaction_id = transaction['transaction_id']
                 del transactions[i]
                 write_json('transactions.json', transactions)
                 break
+        
+        # If we found and deleted a transaction, also delete its details
+        if transaction_id is not None:
+            # Remove all details for this transaction
+            transaction_details = [
+                detail for detail in transaction_details 
+                if detail['transaction_id'] != transaction_id
+            ]
+            write_json('transaction_details.json', transaction_details)
         
         return {
             "success": True,

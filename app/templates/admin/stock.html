@@ -128,5 +128,44 @@ document.addEventListener('DOMContentLoaded', function() {
         el.textContent = formatMoney(el.dataset.price);
     });
 });
+
+function submitStockAdjustment(event) {
+    event.preventDefault();
+    
+    const details = [];
+    const inputs = document.querySelectorAll('input[name^="adjustment-"]');
+    let hasAdjustments = false;
+    
+    // Create a map to consolidate adjustments for each product
+    const productAdjustments = new Map();
+    
+    inputs.forEach(input => {
+        const adjustment = parseInt(input.value) || 0;
+        if (adjustment !== 0) { // Allow negative adjustments
+            const productId = parseInt(input.name.split('-')[1]);
+            // Add to or update the map
+            productAdjustments.set(
+                productId, 
+                (productAdjustments.get(productId) || 0) + adjustment
+            );
+            hasAdjustments = true;
+        }
+    });
+
+    // Convert map to array of details
+    productAdjustments.forEach((adjustment, productId) => {
+        details.push({
+            product_id: productId,
+            adjustment: adjustment
+        });
+    });
+
+    if (!hasAdjustments) {
+        alert('Por favor ingrese al menos un ajuste de stock');
+        return;
+    }
+
+    // Rest of the submission code...
+}
 </script>
 {% endblock %} 

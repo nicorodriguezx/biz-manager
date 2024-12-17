@@ -1,5 +1,7 @@
 bizuser_pythonanywhere_com_wsgi.py
 app/data/*.json
+to-do.md
+commits-log.md
 
 # Python
 __pycache__/
