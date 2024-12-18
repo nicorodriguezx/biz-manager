@@ -75,9 +75,10 @@
             <table class="table">
                 <tbody>
                     {% for summary in summaries %}
-                    <tr class="summary-row">
+                    <tr class="summary-row" onclick="toggleDetails({{ summary.summary_id }})">
                         <td class="date-cell">
                             {{ summary.date|strftime('%A %d/%m/%Y')|capitalize }}
+                            <i class="fas fa-chevron-down toggle-icon" id="icon-{{ summary.summary_id }}"></i>
                         </td>
                         <td>
                             {% for vendor in vendors %}
@@ -104,6 +105,32 @@
                         <td class="amount-cell">
                             <div class="amount-label">MercadoPago</div>
                             <div class="amount-value" data-price="{{ summary.payment_details.mercadopago }}"></div>
+                        </td>
+                    </tr>
+                    <tr class="details-row" id="details-{{ summary.summary_id }}" style="display: none;">
+                        <td colspan="4">
+                            <div class="products-details">
+                                <table class="details-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Producto</th>
+                                            <th>Cantidad</th>
+                                            <th>Precio Unit.</th>
+                                            <th>Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for product in summary.products %}
+                                        <tr>
+                                            <td>{{ products.get(product.product_id, 'Producto no encontrado') }}</td>
+                                            <td>{{ product.sold_units }}</td>
+                                            <td class="amount-value" data-price="{{ product.unit_price }}"></td>
+                                            <td class="amount-value" data-price="{{ product.total }}"></td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
                         </td>
                     </tr>
                     {% endfor %}
@@ -183,5 +210,20 @@ document.addEventListener('DOMContentLoaded', function() {
         el.textContent = formatMoney(el.dataset.price);
     });
 });
+
+function toggleDetails(summaryId) {
+    const detailsRow = document.getElementById(`details-${summaryId}`);
+    const icon = document.getElementById(`icon-${summaryId}`);
+    
+    if (detailsRow.style.display === 'none') {
+        detailsRow.style.display = 'table-row';
+        icon.classList.remove('fa-chevron-down');
+        icon.classList.add('fa-chevron-up');
+    } else {
+        detailsRow.style.display = 'none';
+        icon.classList.remove('fa-chevron-up');
+        icon.classList.add('fa-chevron-down');
+    }
+}
 </script>
 {% endblock %} 

@@ -209,6 +209,9 @@ def sales_reports():
     users = read_json('users.json')
     vendors = [u for u in users if u.get('role') == 'user' and u.get('exists') != 'false']
     
+    # Get products for names
+    products = {p['product_id']: p['name'] for p in read_json('products.json')}
+    
     try:
         # Get sales summaries
         sales_summaries = read_json('sales_summaries.json')
@@ -235,7 +238,8 @@ def sales_reports():
             selected_vendor=vendor_id,
             start_date=start_date,
             end_date=end_date,
-            selected_range=selected_range
+            selected_range=selected_range,
+            products=products
         )
         
     except FileNotFoundError:
@@ -248,7 +252,8 @@ def sales_reports():
             selected_vendor=vendor_id,
             start_date=start_date,
             end_date=end_date,
-            selected_range=selected_range
+            selected_range=selected_range,
+            products={}
         ) 
 
 @admin.route('/stock')
@@ -270,12 +275,16 @@ def view_stock():
         transaction_details = read_json('transaction_details.json')
         products = read_json('products.json')
         
+        # Filter only active products
+        active_products = [p for p in products if p.get('exists') == 'true']
+        print(f"Total products: {len(products)}, Active products: {len(active_products)}")  # Debug
+        
         # Filter by period
         period_purchases = [p for p in purchases if start_date <= p['date'] <= end_date]
         period_transactions = [t for t in transactions if start_date <= t['timestamp'].split('T')[0] <= end_date]
         
         stock = {}
-        for product in sorted(products, key=lambda x: x['name'].strip().lower()):
+        for product in sorted(active_products, key=lambda x: x['name'].strip().lower()):
             pid = product['product_id']
             stock[pid] = {
                 'product': product,
@@ -283,23 +292,28 @@ def view_stock():
                 'period_purchased': 0,
                 'period_sold': 0
             }
+            
+        # Debug print for stock initialization
+        print(f"Initialized stock tracking for {len(stock)} active products")
         
         # Calculate period purchases using purchase_details
         for purchase in period_purchases:
             details = [d for d in purchase_details if d['purchase_id'] == purchase['purchase_id']]
             for detail in details:
                 pid = detail['product_id']
-                stock[pid]['period_purchased'] += detail['quantity']
+                if pid in stock:  # Only count if product is active
+                    stock[pid]['period_purchased'] += detail['quantity']
         
         # Calculate period sales
         for transaction in period_transactions:
             details = [d for d in transaction_details if d['transaction_id'] == transaction['transaction_id']]
             for detail in details:
                 pid = detail['product_id']
-                if transaction['type'] == 'extract':
-                    stock[pid]['period_sold'] += detail['quantity']
-                else:  # return
-                    stock[pid]['period_sold'] -= detail['quantity']
+                if pid in stock:  # Only count if product is active
+                    if transaction['type'] == 'extract':
+                        stock[pid]['period_sold'] += detail['quantity']
+                    else:  # return
+                        stock[pid]['period_sold'] -= detail['quantity']
         
         # Calculate current stock (using all-time data)
         all_purchases = purchases
@@ -307,23 +321,29 @@ def view_stock():
             details = [d for d in purchase_details if d['purchase_id'] == purchase['purchase_id']]
             for detail in details:
                 pid = detail['product_id']
-                stock[pid]['current'] += detail['quantity']
+                if pid in stock:  # Only count if product is active
+                    stock[pid]['current'] += detail['quantity']
         
         # Subtract all extractions and add returns
         for transaction in transactions:
             details = [d for d in transaction_details if d['transaction_id'] == transaction['transaction_id']]
             for detail in details:
                 pid = detail['product_id']
-                if transaction['type'] == 'extract':
-                    stock[pid]['current'] -= detail['quantity']
-                else:  # return
-                    stock[pid]['current'] += detail['quantity']
+                if pid in stock:  # Only count if product is active
+                    if transaction['type'] == 'extract':
+                        stock[pid]['current'] -= detail['quantity']
+                    else:  # return
+                        stock[pid]['current'] += detail['quantity']
         
         # Calculate total value of current stock
         total_value = sum(
             stock[pid]['current'] * stock[pid]['product']['price']
             for pid in stock
         )
+        
+        # Debug print final stats
+        print(f"Products with low stock: {len([pid for pid in stock if stock[pid]['current'] <= stock[pid]['product']['min_stock']])}")
+        print(f"Products with normal stock: {len([pid for pid in stock if stock[pid]['current'] > stock[pid]['product']['min_stock']])}")
         
         return render_template(
             'admin/stock.html',
@@ -357,6 +377,12 @@ def manage_purchases():
             purchases = read_json('purchases.json')
             purchase_details = read_json('purchase_details.json')
             
+            # Get next available purchase_id
+            next_purchase_id = max((p['purchase_id'] for p in purchases), default=0) + 1
+            
+            # Get next available detail_id
+            next_detail_id = max((d['detail_id'] for d in purchase_details), default=0) + 1
+            
             # Calculate total cost
             total_cost = sum(float(item['quantity']) * float(item['unit_cost']) 
                            for item in data['items'])
@@ -366,21 +392,19 @@ def manage_purchases():
             current_time = datetime.now(gmt3_offset).isoformat()
             
             # Create new purchase
-            purchase_id = len(purchases) + 1
             new_purchase = {
-                'purchase_id': purchase_id,
+                'purchase_id': next_purchase_id,
                 'date': date.today().isoformat(),
                 'created_at': current_time,  # Now in GMT-3
                 'total_cost': total_cost
             }
             
             # Create purchase details
-            next_detail_id = len(purchase_details) + 1
             new_details = []
             for item in data['items']:
                 detail = {
                     'detail_id': next_detail_id,
-                    'purchase_id': purchase_id,
+                    'purchase_id': next_purchase_id,
                     'product_id': int(item['product_id']),
                     'quantity': int(item['quantity']),
                     'unit_cost': float(item['unit_cost'])
@@ -490,7 +514,10 @@ def view_purchases():
     try:
         purchases = read_json('purchases.json')
         purchase_details = read_json('purchase_details.json')
-        products = read_json('products.json')  # Load all products
+        products = read_json('products.json')
+        
+        # Filter active products
+        active_products = [p for p in products if p.get('exists') != 'false']
         
         # Filter by period
         purchases = [p for p in purchases if start_date <= p['date'] <= end_date]
@@ -509,22 +536,21 @@ def view_purchases():
         return render_template(
             'admin/view_purchases.html',
             purchases=purchases,
-            products=products,  # Pass all products to the template
             total_spent=sum(p['total_cost'] for p in purchases),
             start_date=start_date,
             end_date=end_date,
-            selected_range=selected_range
+            selected_range=selected_range,
+            products=active_products  # Pass only active products for dropdowns
         )
-        
     except FileNotFoundError:
         return render_template(
             'admin/view_purchases.html',
             purchases=[],
-            products=[],  # Pass empty products list
             total_spent=0,
             start_date=start_date,
             end_date=end_date,
-            selected_range=selected_range
+            selected_range=selected_range,
+            products=[]  # Pass empty products list
         )
 
 @admin.route('/transactions')
@@ -944,8 +970,25 @@ def manage_purchase_detail(detail_id):
             return {"error": "Detalle no encontrado"}, 404
             
         if request.method == 'DELETE':
+            # Remove the detail
             purchase_details = [d for d in purchase_details if d['detail_id'] != detail_id]
             write_json('purchase_details.json', purchase_details)
+            
+            # Check if this was the last detail for this purchase
+            remaining_details = [d for d in purchase_details if d['purchase_id'] == detail['purchase_id']]
+            if not remaining_details:
+                # If no details remain, delete the purchase
+                purchases = read_json('purchases.json')
+                purchases = [p for p in purchases if p['purchase_id'] != detail['purchase_id']]
+                write_json('purchases.json', purchases)
+            else:
+                # Update purchase total cost
+                purchases = read_json('purchases.json')
+                for purchase in purchases:
+                    if purchase['purchase_id'] == detail['purchase_id']:
+                        purchase['total_cost'] = sum(d['quantity'] * d['unit_cost'] for d in remaining_details)
+                        break
+                write_json('purchases.json', purchases)
             
         elif request.method == 'PUT':
             data = request.json
@@ -956,15 +999,15 @@ def manage_purchase_detail(detail_id):
             })
             write_json('purchase_details.json', purchase_details)
             
-        # Update purchase total cost
-        purchases = read_json('purchases.json')
-        for purchase in purchases:
-            if purchase['purchase_id'] == detail['purchase_id']:
-                details = [d for d in purchase_details if d['purchase_id'] == purchase['purchase_id']]
-                purchase['total_cost'] = sum(d['quantity'] * d['unit_cost'] for d in details)
-                break
-                
-        write_json('purchases.json', purchases)
+            # Update purchase total cost
+            purchases = read_json('purchases.json')
+            for purchase in purchases:
+                if purchase['purchase_id'] == detail['purchase_id']:
+                    details = [d for d in purchase_details if d['purchase_id'] == purchase['purchase_id']]
+                    purchase['total_cost'] = sum(d['quantity'] * d['unit_cost'] for d in details)
+                    break
+                    
+            write_json('purchases.json', purchases)
         
         return {"success": True}
     except Exception as e:

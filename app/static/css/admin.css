@@ -1742,3 +1742,57 @@
         grid-template-columns: 1fr;
     }
 }
+
+.summary-row {
+    cursor: pointer;
+}
+
+.summary-row:hover {
+    background-color: rgba(0,0,0,0.05);
+}
+
+.toggle-icon {
+    margin-left: 8px;
+    font-size: 0.8em;
+    color: #666;
+}
+
+.products-details {
+    padding: 15px;
+    background-color: #f8f9fa;
+}
+
+.details-table {
+    width: 100%;
+    margin-bottom: 0;
+}
+
+.details-table th {
+    background-color: #e9ecef;
+    padding: 8px;
+    text-align: left;
+}
+
+.details-table td {
+    padding: 8px;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.details-row {
+    background-color: #f8f9fa;
+}
+
+@media (max-width: 640px) {
+    .details-table {
+        font-size: 0.875rem;
+    }
+    
+    .details-table th,
+    .details-table td {
+        padding: 6px;
+    }
+    
+    .products-details {
+        padding: 8px;
+    }
+}

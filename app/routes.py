@@ -92,6 +92,23 @@ def log_extract():
         if not details:
             return {"error": "Entrada inválida"}, 400
 
+        # Check for recent transactions
+        transactions = read_json('transactions.json')
+        current_time = datetime.now(timezone(timedelta(hours=-3)))
+        
+        # Get user's recent transactions of type 'extract'
+        recent_transactions = [
+            t for t in transactions 
+            if t['user_id'] == current_user.user_id 
+            and t['type'] == 'extract'
+            and (current_time - datetime.fromisoformat(t['timestamp'])).total_seconds() < 120
+        ]
+
+        if recent_transactions:
+            return {
+                "error": "Ya existe una extracción reciente. Por favor espere 2 minutos antes de realizar otra."
+            }, 429  # 429 Too Many Requests
+
         log_transaction(current_user.user_id, "extract", details)
         return {"message": "Extracción registrada exitosamente"}
 
@@ -109,6 +126,23 @@ def log_return():
         finish_day = request.json.get('finishDay', False)
         
         if details:
+            # Check for recent transactions
+            transactions = read_json('transactions.json')
+            current_time = datetime.now(timezone(timedelta(hours=-3)))
+            
+            # Get user's recent transactions of type 'return'
+            recent_transactions = [
+                t for t in transactions 
+                if t['user_id'] == current_user.user_id 
+                and t['type'] == 'return'
+                and (current_time - datetime.fromisoformat(t['timestamp'])).total_seconds() < 120
+            ]
+
+            if recent_transactions:
+                return {
+                    "error": "Ya existe una devolución reciente. Por favor espere 2 minutos antes de realizar otra."
+                }, 429  # 429 Too Many Requests
+
             # Validate return quantities
             transaction_date = date.today().isoformat()
             summary = calculate_daily_summary(current_user.user_id, transaction_date)

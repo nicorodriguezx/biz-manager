@@ -106,18 +106,21 @@ function submitForm(event) {
         },
         body: JSON.stringify({ details: details })
     })
-    .then(response => response.json())
-    .then(data => {
-        if (data.error) {
-            alert(data.error);
-        } else {
-            alert('Productos retirados exitosamente');
-            window.location.href = '/dashboard';
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(data => {
+                throw new Error(data.error || 'Error al procesar la solicitud');
+            });
         }
+        return response.json();
+    })
+    .then(data => {
+        alert('Productos retirados exitosamente');
+        window.location.href = '/dashboard';
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('Ocurrió un error al procesar la solicitud');
+        alert(error.message);
     });
 }
 </script>
